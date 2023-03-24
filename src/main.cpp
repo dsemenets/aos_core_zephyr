@@ -15,6 +15,10 @@
 #include "logger/logger.hpp"
 #include "version.hpp"
 
+#include <xen_dom_mgmt.h>
+
+struct xen_domain_cfg domd_cfg;
+
 int main(void)
 {
     printk("*** Aos zephyr application: %s ***\n", AOS_ZEPHYR_APP_VERSION);
