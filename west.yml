@@ -22,10 +22,10 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
 
     - name: amoi
-      url-base: https://github.com/oleksiimoisieiev/
+      url-base: https://github.com/oleksiimoisieiev
 
     - name: dsemenets
-      url-base: https://github.com/dsemenets/
+      url-base: git@github.com:dsemenets
 
   projects:
     - name: zephyr
@@ -38,8 +38,8 @@ manifest:
       revision: develop
 
     - name: zephyr-xenlib
-      remote: amoi
-      revision: xrun_upstr
+      remote: dsemenets
+      revision: xentop
 
     - name: littlefs
       remote: zephyrproject-rtos
