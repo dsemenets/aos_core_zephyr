@@ -53,7 +53,7 @@ void CMClient::ProcessMessages()
     auto i = 0;
 
     while (true) {
-        LOG_DBG() << "Process message: " << i++;
+//        LOG_DBG() << "Process message: " << i++;
 
         sleep(2);
     }

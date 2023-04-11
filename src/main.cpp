@@ -205,9 +205,9 @@ static int littlefs_umount(struct fs_mount_t *mp)
 }
 
 char json_msg[] = "{"
-	 "\"ociVersion\" : \"1.0.1\", "
-		"\"vm\" : { "
-			"\"hypervisor\": { "
+	"\"ociVersion\" : \"1.0.1\", "
+	"\"vm\" : { "
+		"\"hypervisor\": { "
 			"\"path\": \"xen\", "
 			"\"parameters\": [\"pvcalls=true\"] "
 		"}, "
@@ -217,7 +217,8 @@ char json_msg[] = "{"
 		"}, "
 		"\"hwconfig\": { "
 			"\"devicetree\": \"/lfs/uni.dtb\" "
-		"} "
+		"}, "
+		"\"name\": \"DomU\""
 	"} "
 "}";
 
@@ -226,7 +227,9 @@ extern char __img_unikraft_end[];
 extern char __dtb_unikraft_start[];
 extern char __dtb_unikraft_end[];
 
-extern void init_root();
+void init_root(void)
+{
+}
 
 static void prepare_configs()
 {

@@ -23,10 +23,13 @@ manifest:
 
     - name: amoi
       url-base: https://github.com/oleksiimoisieiev/
+
+    - name: dsemenets
+      url-base: https://github.com/dsemenets/
   projects:
     - name: zephyr
-      remote: xen-troops
-      revision: aos-wip
+      remote: dsemenets
+      revision: xtop
       west-commands: scripts/west-commands.yml
 
     - name: aos_core_lib_cpp
@@ -34,8 +37,8 @@ manifest:
       revision: 7cdf7299ff704c6046c1d49eb20070b08f171912
 
     - name: zephyr-xenlib
-      remote: amoi
-      revision: xrun
+      remote: dsemenets
+      revision: xentop
 
     - name: littlefs
       remote: zephyr

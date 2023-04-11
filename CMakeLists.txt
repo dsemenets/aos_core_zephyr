@@ -11,16 +11,6 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
 
-set(UTILS_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
-if (DTC)
-  add_custom_target(
-    fix_dtb
-    DEPENDS ${ZEPHYR_FINAL_EXECUTABLE}
-    COMMAND ${UTILS_SCRIPTS_DIR}/fix_dtb.sh ${UTILS_SCRIPTS_DIR}/gicv2.tmpl ${ZEPHYR_BINARY_DIR}/virt_gicv2.dtb ${ZEPHYR_BINARY_DIR}/zephyr.bin)
-else()
-  message(WARNING "No dtc program")
-endif()
-
 project(aoszephyrapp)
 
 # ######################################################################################################################
@@ -99,23 +89,63 @@ ExternalProject_Add(
     BUILD_BYPRODUCTS ${AOSCORE_BUILD_DIR}/lib/libaossmcpp.a ${AOSCORE_BUILD_DIR}/lib/libaosiamcpp.a
 )
 
-set(XEN_SRCDIR ${CMAKE_CURRENT_SOURCE_DIR}/../xen)
-set(XEN_BINDIR ${CMAKE_CURRENT_BINARY_DIR}/hyp)
+if(BOARD MATCHES "qemu")
+    set(utils_scripts_dir ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+    if(DTC)
+        add_custom_target(
+            fix_dtb
+            DEPENDS ${ZEPHYR_FINAL_EXECUTABLE}
+            COMMAND ${utils_scripts_dir}/fix_dtb.sh ${utils_scripts_dir}/gicv2.tmpl ${ZEPHYR_BINARY_DIR}/virt_gicv2.dtb
+                    ${ZEPHYR_BINARY_DIR}/zephyr.bin
+        )
+        add_dependencies(run fix_dtb)
+    else()
+        message(WARNING "No dtc program")
+    endif()
+    set(BUILD_XEN 1)
+#    set(XEN_VER 4.16)
+    set(XEN_VER 4.17)
+    if (BUILD_XEN)
+        set(XEN_SRCDIR ${CMAKE_CURRENT_SOURCE_DIR}/../xen_${XEN_VER})
+        if(XEN_VER VERSION_EQUAL 4.16)
+            message(WARNING "Here is VER 4.16")
+            set(XEN_BINDIR ${CMAKE_CURRENT_BINARY_DIR}/hyp)
+        else()
+            message(WARNING "Here is VER 4.17")
+            set(XEN_BINDIR ${XEN_SRCDIR}/xen)
+            set(XEN_BUILD_OPT O=${XEN_BINDIR})
+        endif()
 
-ExternalProject_Add(
-  hypervisor
-  PREFIX ${XEN_BINDIR}
-  SOURCE_DIR ${XEN_SRCDIR}/xen
-  BINARY_DIR ${XEN_BINDIR}
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ${MAKE} make -C ${XEN_SRCDIR}/xen O=${XEN_BINDIR}
-  CONFIG_QEMU_XEN=y CONFIG_DEBUG=y XSM_ENABLE=y
-  XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- HOSTCC=gcc
-  INSTALL_COMMAND cp ${XEN_BINDIR}/xen ${ZEPHYR_BINARY_DIR}/xen
-  )
+        ExternalProject_Add(
+            hypervisor
+            PREFIX ${XEN_BINDIR}
+            SOURCE_DIR ${XEN_SRCDIR}/xen
+            BINARY_DIR ${XEN_BINDIR}
+            CONFIGURE_COMMAND ""
+            BUILD_COMMAND ${MAKE} make -C ${XEN_SRCDIR}/xen ${XEN_BUILD_OPT}
+                CONFIG_QEMU_XEN=y CONFIG_DEBUG=y XSM_ENABLE=y
+                XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- HOSTCC=gcc
+            INSTALL_COMMAND cp ${XEN_BINDIR}/xen ${ZEPHYR_BINARY_DIR}/xen
+        )
+    else()
+        set(xen_srcdir ${CMAKE_CURRENT_SOURCE_DIR})
+        set(xen_bindir ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_dependencies(app hypervisor)
-
+        ExternalProject_Add(
+            hypervisor
+            PREFIX ${xen_bindir}
+            SOURCE_DIR ${xen_srcdir}
+            BINARY_DIR ${xen_bindir}
+            CONFIGURE_COMMAND ""
+#        BUILD_COMMAND ${MAKE} make -C ${xen_srcdir}/xen O=${xen_bindir} CONFIG_QEMU_XEN=y CONFIG_DEBUG=y XSM_ENABLE=y
+#                      XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- HOSTCC=gcc
+#        INSTALL_COMMAND cp ${xen_bindir}/xen ${ZEPHYR_BINARY_DIR}/xen
+            BUILD_COMMAND ""
+            INSTALL_COMMAND cp ${xen_bindir}/xen ${ZEPHYR_BINARY_DIR}/xen
+        )
+    endif()
+    add_dependencies(app hypervisor)
+endif()
 # aossm
 
 file(MAKE_DIRECTORY ${AOSCORE_BUILD_DIR}/include)
